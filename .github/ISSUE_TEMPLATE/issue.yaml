@@ -1,14 +1,12 @@
-name: "Deploy Request"
-description: "Trigger deployment to UAT or PROD"
-title: "Select Environment for Deployment"
-labels: ["deploy-request"]
+name: "Deploy Request to PROD Environment"
+description: "To be able to trigger the pipeline add label deploy-request-prod."
+title: "Trigger deployment to PROD"
 body:
   - type: dropdown
     id: environment
     attributes:
       label: Environment
       options:
-        - uat
         - prod
     validations:
       required: true
@@ -16,11 +14,9 @@ body:
   - type: dropdown
     id: team
     attributes:
-      label: Team Responsible for Deployment
-      description: Select the team requesting this deployment
+      label: Team Name
+      description: "Select the Team requesting this deployment. If you are not a member of the team, you will not be able to deploy.""
       options:
         - prod
     validations:
       required: true
-
-

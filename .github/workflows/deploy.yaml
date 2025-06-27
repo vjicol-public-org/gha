@@ -1,4 +1,4 @@
-name: Label Deploy Requests
+name: Production Deployment Workflow
 
 on:
   issues:
@@ -10,34 +10,30 @@ permissions:
   issues: write
   pull-requests: write
   
-
-
 jobs:
   check-issue-label:
     runs-on: ubuntu-latest
-    if: github.event.issue.labels.*.name != 'deploy-request'
+    if: github.event.issue.labels.*.name != 'deploy-request-prod'
     steps:
       - name: Check issue label
         id: label-check
         uses: actions/github-script@v7
         with:
           script: |
-            const issue_number = context.issue.number;
             const labels = context.payload.issue.labels.map(label => label.name);
-            const hasLabel = labels.includes('deploy-request');
+            const hasLabel = labels.includes('deploy-request-prod');
 
             if (!hasLabel) {
-              const message = `❌ This issue must be labeled with \`deploy-request\` to trigger deployment validation.`;
               await github.rest.issues.createComment({
+                issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number,
-                body: message,
+                body: `❌ This issue must be labeled with \`deploy-request-prod\` to proceed with deployment.`
               });
-              core.setFailed(message);
-            }
-            else {
-              console.log(`✅ Issue #${issue_number} is labeled with 'deploy-request'.`);
+
+              core.setFailed('Missing required label: deploy-request-prod');
+            } else {
+              console.log(`✅ Issue #${context.issue.number} is labeled with 'deploy-request-prod'.`);
             }
   validate-user-permissions:
     needs: [check-issue-label]
@@ -124,42 +120,38 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const issue_number = context.issue.number;
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-
-            // Check job status (if approval was granted, this step will run normally)
             const jobStatus = process.env.GITHUB_JOB_STATUS || 'unknown';
-
+      
             if (jobStatus === 'failure' || jobStatus === 'cancelled') {
               await github.rest.issues.createComment({
-                issue_number,
-                owner,
-                repo,
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 body: `❌ Deployment was **rejected or cancelled** during environment approval for **prod**.`
               });
-
+      
               await github.rest.issues.addLabels({
-                issue_number,
-                owner,
-                repo,
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 labels: ['rejected', 'prod-deploy-rejected']
               });
             } else {
               await github.rest.issues.createComment({
-                issue_number,
-                owner,
-                repo,
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 body: `✅ Deployment to **prod** was approved.`
               });
-
+      
               await github.rest.issues.addLabels({
-                issue_number,
-                owner,
-                repo,
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 labels: ['approved', 'prod-deploy-approved']
               });
             }
+      
 
   terraform-deploy:
     needs: [request-approval]
@@ -201,16 +193,6 @@ jobs:
           # Capture exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
       
-      # - name: Prepare apply output for comment
-      #   id: prepare-apply-output
-      #   run: |
-      #       {
-      #         echo "TERRAFORM_APPLY_OUTPUT<<EOF"
-      #         cat apply.txt
-      #         echo "EOF"
-      #       } >> $GITHUB_OUTPUT
-      
-      
       - name: Comment Apply Output on GitHub Issue
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -239,7 +221,7 @@ jobs:
             });
           
       - name: Comment failure on GitHub issue
-        if: ${{ steps.apply.outputs.exit_code != '0' }} # Only run if apply failed    
+        if: ${{ steps.apply.outputs.exit_code != '0' }} 
         uses: actions/github-script@v7
         with:
           script: |
