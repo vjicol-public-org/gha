@@ -85,6 +85,12 @@ jobs:
           cat plan.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Upload Terraform Plan File
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+    
       - name: Comment Plan on Issue
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -95,8 +101,52 @@ jobs:
             <summary>Click to expand plan output</summary>
       
             ```
-            ${{ steps.plan.outputs.PLAN_OUTPUT }}
+            ${{ steps.plan.outputs.TERRAFORM_PLAN_OUTPUT }}
             ```
       
             </details>
+
+  request-approval:
+    needs: validate-user
+    runs-on: ubuntu-latest
+    environment:
+      name: prod-deploy-approval
+      url: https://your-app-url.com  # Optional
+    outputs:
+      env-name: ${{ steps.setenv.outputs.env }}
+
+    steps:
+      - name: Set environment name for output
+        id: setenv
+        run: echo "env=prod-deploy-approval" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: request-approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::295616346134:role/github-terraform-deployer
+          aws-region: us-east-1
+          role-session-name: github-actions
+
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: .
+
+      - name: Terraform Init
+        run: terraform init
         
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
