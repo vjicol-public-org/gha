@@ -163,7 +163,7 @@ jobs:
 # Job to deploy Terraform plan after approval
 
   terraform-deploy:
-    needs: request-approval
+    needs: [request-approval,handle-rejection]
     runs-on: ubuntu-latest
     if: success()
     steps:
