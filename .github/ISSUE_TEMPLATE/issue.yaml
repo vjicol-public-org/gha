@@ -1,11 +1,12 @@
 name: "Deploy Request to PROD Environment"
-description: "To be able to trigger the pipeline add label deploy-request-prod."
+
 title: "Trigger deployment to PROD"
 body:
   - type: dropdown
     id: environment
     attributes:
       label: Environment
+      description: "To be able to trigger the pipeline add label deploy-request-prod to the issue."
       options:
         - prod
     validations:
