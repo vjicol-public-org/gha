@@ -40,30 +40,16 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: List members of the deployment team
-        uses: actions/github-script@v7
+      - name: List team members
+        id: get-members
+        uses: garnertb/get-team-members@v1
         with:
-          script: |
-            const body = context.payload.issue.body;
+          org: vjicol-public-org        # ← replace with your actual GitHub org
+          team_slug: prod               # ← replace with your actual team slug
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-            // Extract team from issue body
-            const teamMatch = body.match(/### Team Name\s+([^\n]+)/);
-            const teamSlug = teamMatch ? teamMatch[1].trim().toLowerCase() : null;
-
-            if (!teamSlug) {
-              console.log("⚠️ No team found in issue body.");
-              return;
-            }
-
-            const members = await github.rest.teams.listMembersInOrg({
-              org: context.repo.owner,
-              team_slug: teamSlug,
-            });
-
-            console.log(`👥 Members of team '${teamSlug}':`);
-            members.data.forEach(member => {
-              console.log(`- @${member.login}`);
-            });
+      - name: Echo members
+        run: echo "${{ steps.get-members.outputs.members }}"
 
       - name: Check user team and post error if unauthorized
         uses: actions/github-script@v7
