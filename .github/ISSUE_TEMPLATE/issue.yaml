@@ -13,3 +13,14 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: team
+    attributes:
+      label: Team Responsible for Deployment
+      description: Select the team requesting this deployment
+      options:
+        - prod
+    validations:
+      required: true
+
+
