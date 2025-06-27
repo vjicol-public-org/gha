@@ -1,0 +1,39 @@
+            # const body = context.payload.issue.body;
+            # const username = context.payload.issue.user.login;
+            # const issue_number = context.issue.number;
+            # const org = context.repo.owner;
+
+            # const envMatch = body.match(/### Environment\s+([^\n]+)/);
+            # const teamMatch = body.match(/### Team Responsible for Deployment\s+([^\n]+)/);
+            # const environment = envMatch ? envMatch[1].trim().toLowerCase() : null;
+            # const teamSlug = teamMatch ? teamMatch[1].trim().toLowerCase() : null;
+
+            # if (!environment || !teamSlug) {
+            #   const msg = `❌ Missing **Environment** or **Team Responsible for Deployment** in issue body.`;
+            #   await github.rest.issues.createComment({
+            #     owner: org,
+            #     repo: context.repo.repo,
+            #     issue_number,
+            #     body: msg,
+            #   });
+            #   core.setFailed(msg);
+            #   return;
+            # }
+
+            # try {
+            #   await github.rest.teams.getMembershipForUserInOrg({
+            #     org,
+            #     team_slug: teamSlug,
+            #     username,
+            #   });
+            #   console.log(`✅ @${username} is a member of ${teamSlug}.`);
+            # } catch (error) {
+            #   const message = `❌ @${username} is **not** a member of the **${teamSlug}** team. Cannot proceed with **${environment}** deployment.`;
+            #   await github.rest.issues.createComment({
+            #     owner: org,
+            #     repo: context.repo.repo,
+            #     issue_number,
+            #     body: message,
+            #   });
+            #   core.setFailed(message);
+            # }
