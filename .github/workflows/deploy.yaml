@@ -200,11 +200,10 @@ jobs:
       - name: Prepare apply output for comment
         id: prepare-apply-output
         run: |
-          {
-            echo "OUTPUT<<EOF"
-            cat apply.txt
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          echo "TERRAFORM_APPLY_OUTPUT<<EOF" >> $GITHUB_OUTPUT
+          cat apply.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
       
       - name: Comment Apply Output on GitHub Issue
         uses: peter-evans/create-or-update-comment@v4
@@ -216,7 +215,7 @@ jobs:
             <summary>Click to expand output</summary>
       
             ```
-            ${{ steps.prepare-apply-output.outputs.OUTPUT }}
+            ${{ steps.prepare-apply-output.outputs.TERRAFORM_APPLY_OUTPUT }}
             ```
       
             </details>
