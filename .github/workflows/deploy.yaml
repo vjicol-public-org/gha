@@ -69,15 +69,19 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::295616346134:role/github-terraform-deployer
-          aws-region: us-west-2
+          aws-region: us-east-1
           role-session-name: github-actions
 
       - name: Terraform Init & Plan
-        id: plan
+        id: init
         run: |
           terraform init
-          terraform plan -out=tfplan > plan.txt
-          echo "PLAN_OUTPUT<<EOF" >> $GITHUB_OUTPUT
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -no-color > plan.txt
+          echo "TERRAFORM_PLAN_OUTPUT<<EOF" >> $GITHUB_OUTPUT
           cat plan.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
@@ -86,7 +90,13 @@ jobs:
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |
-            ### 📦 Terraform Plan Output
+            ## 📦 Terraform Plan for `${{ github.event.repository.name }}`
+            <details>
+            <summary>Click to expand plan output</summary>
+      
             ```
             ${{ steps.plan.outputs.PLAN_OUTPUT }}
             ```
+      
+            </details>
+        
