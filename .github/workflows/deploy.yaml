@@ -13,7 +13,7 @@ permissions:
 
 
 jobs:
-  label-issue:
+  check-issue-label:
     runs-on: ubuntu-latest
     if: github.event.issue.labels.*.name != 'deploy-request'
     steps:
@@ -40,7 +40,7 @@ jobs:
               console.log(`✅ Issue #${issue_number} is labeled with 'deploy-request'.`);
             }
   validate-user:
-    needs: [label-issue]
+    needs: [check-issue-label]
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -161,7 +161,6 @@ jobs:
               });
             }
 
-
   terraform-deploy:
     needs: [request-approval]
     runs-on: ubuntu-latest
@@ -201,9 +200,11 @@ jobs:
       - name: Prepare apply output for comment
         id: prepare-apply-output
         run: |
-          echo "OUTPUT<<EOF" >> $GITHUB_OUTPUT
-          cat apply.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "OUTPUT<<EOF"
+            cat apply.txt
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
       
       - name: Comment Apply Output on GitHub Issue
         uses: peter-evans/create-or-update-comment@v4
