@@ -1,5 +1,5 @@
 name: "Deploy Request to PROD Environment"
-
+description: "This issue template is used to request a deployment to the PROD environment. Please ensure you have the necessary permissions and that the issue is labeled correctly."
 title: "Trigger deployment to PROD"
 body:
   - type: dropdown
