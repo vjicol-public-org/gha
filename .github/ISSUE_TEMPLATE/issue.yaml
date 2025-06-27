@@ -1,0 +1,15 @@
+name: "Deploy Request"
+description: "Trigger deployment to UAT or PROD"
+title: "Select Environment for Deployment"
+labels: ["deploy-request"]
+body:
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - uat
+        - prod
+    validations:
+      required: true
+

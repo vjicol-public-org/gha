@@ -1,0 +1,67 @@
+name: Label Deploy Requests
+
+on:
+  issues:
+    types: [opened, edited]
+    
+permissions:
+  issues: write
+  
+
+
+jobs:
+  validate-user:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check user team and update issue if unauthorized
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const username = context.payload.issue.user.login;
+            const teamSlug = 'prod';
+            const org = context.repo.owner;
+            const issue_number = context.issue.number;
+
+            try {
+              await github.rest.teams.getMembershipForUserInOrg({
+                org,
+                team_slug: teamSlug,
+                username,
+              });
+              console.log(`${username} is authorized.`);
+            } catch (error) {
+              const message = `❌ @${username} is **not** a member of the **${teamSlug}** team. Deployment rejected.`;
+
+              // Post a comment on the issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: message,
+              });
+
+              // Mark job as failed
+              core.setFailed(message);
+            }
+
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add label based on environment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body.toLowerCase();
+            const labels = [];
+
+            if (body.includes("uat")) labels.push("uat");
+            if (body.includes("prod")) labels.push("prod");
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: labels,
+              });
+            }
