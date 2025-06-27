@@ -51,12 +51,12 @@ jobs:
             const org = context.repo.owner;
 
             const envMatch = body.match(/### Environment\s+([^\n]+)/);
-            const teamMatch = body.match(/### Requesting Team\s+([^\n]+)/);
+            const teamMatch = body.match(/### Team Responsible for Deployment\s+([^\n]+)/);
             const environment = envMatch ? envMatch[1].trim().toLowerCase() : null;
             const teamSlug = teamMatch ? teamMatch[1].trim().toLowerCase() : null;
 
             if (!environment || !teamSlug) {
-              const msg = `❌ Missing **Environment** or **Requesting Team** in issue body.`;
+              const msg = `❌ Missing **Environment** or **Team Responsible for Deployment** in issue body.`;
               await github.rest.issues.createComment({
                 owner: org,
                 repo: context.repo.repo,
