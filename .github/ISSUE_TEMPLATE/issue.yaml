@@ -15,7 +15,7 @@ body:
     id: team
     attributes:
       label: Team Name
-      description: "Select the Team requesting this deployment. If you are not a member of the team, you will not be able to deploy.""
+      description: "Select the Team requesting this deployment. If you are not a member of the team, you will not be able to deploy."
       options:
         - prod
     validations:
