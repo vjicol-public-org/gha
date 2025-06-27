@@ -48,7 +48,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            console.log(`✅ @${username} is a member of ${teamSlug}.`);
+            const username = context.payload.issue.user.login || 'test-user';
+            const teamSlug = 'prod';
+
+            console.log(`✅ @${username} is a member of "${teamSlug}".`);
             # const body = context.payload.issue.body;
             # const username = context.payload.issue.user.login;
             # const issue_number = context.issue.number;
