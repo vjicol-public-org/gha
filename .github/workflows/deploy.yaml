@@ -44,9 +44,44 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const username = 'dummy-user';
-            const teamSlug = 'prod';
-            console.log(`✅ @${username} is a member of "${teamSlug}".`);
+            const body = context.payload.issue.body;
+            const username = context.payload.issue.user.login;
+
+            const envMatch = body.match(/### Environment\s+([^\n]+)/);
+            const teamMatch = body.match(/### Team Name\s+([^\n]+)/);
+            const environment = envMatch ? envMatch[1].trim().toLowerCase() : null;
+            const teamSlug = teamMatch ? teamMatch[1].trim().toLowerCase() : null;
+
+            if (!environment || !teamSlug) {
+              const msg = `❌ Missing **Environment** or **Team Name** in issue body.`;
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: msg,
+              });
+              core.setFailed(msg);
+              return;
+            }
+
+            try {
+              await github.rest.teams.getMembershipForUserInOrg({
+                org: context.repo.owner,
+                team_slug: teamSlug,
+                username: username,
+              });
+              console.log(`✅ @${username} is a member of ${teamSlug}.`);
+            } catch (error) {
+              const message = `❌ @${username} is **not** a member of the **${teamSlug}** team. Cannot proceed with **${environment}** deployment.`;
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message,
+              });
+              core.setFailed(message);
+            }
+
 
   terraform-plan:
     needs: [validate-user-permissions]
@@ -198,7 +233,7 @@ jobs:
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |
-            ## 🚀 Terraform Apply Output for `${{ github.event.repository.name }}`
+            ## 🛠️ Terraform Apply Output summary for Prod environment`
             <details>
             <summary>Click to expand output</summary>
       
