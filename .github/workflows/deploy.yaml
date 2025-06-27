@@ -5,7 +5,10 @@ on:
     types: [opened, edited]
     
 permissions:
+  id-token: write
+  contents: read
   issues: write
+  pull-requests: write
   
 
 
@@ -84,3 +87,42 @@ jobs:
               });
               core.setFailed(message);
             }
+
+  terraform-plan:
+    needs: validate-user
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::295616346134:role/github-terraform-deployer
+          aws-region: us-west-2
+          role-session-name: github-actions
+
+      - name: Terraform Init & Plan
+        id: plan
+        run: |
+          terraform init
+          terraform plan -out=tfplan > plan.txt
+          echo "PLAN_OUTPUT<<EOF" >> $GITHUB_OUTPUT
+          cat plan.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment Plan on Issue
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ### 📦 Terraform Plan Output
+            ```
+            ${{ steps.plan.outputs.PLAN_OUTPUT }}
+            ```
