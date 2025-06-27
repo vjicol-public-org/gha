@@ -39,7 +39,7 @@ jobs:
             else {
               console.log(`✅ Issue #${issue_number} is labeled with 'deploy-request'.`);
             }
-  validate-user:
+  validate-user-permissions:
     needs: [check-issue-label]
     runs-on: ubuntu-latest
     if: success()
@@ -53,7 +53,7 @@ jobs:
             console.log(`✅ @${username} is a member of "${teamSlug}".`);
 
   terraform-plan:
-    needs: validate-user
+    needs: [validate-user-permissions]
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -194,7 +194,7 @@ jobs:
         id: apply
         continue-on-error: true  # allow failure so we can handle it manually
         run: | 
-          terraform apply -auto-approve tfplan > apply.txt 2>&1
+          terraform apply -auto-approve tfplan > apply.txt
           echo "exit_code=$?" >> $GITHUB_OUTPUT
       
       - name: Prepare apply output for comment
